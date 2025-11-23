@@ -22,6 +22,8 @@ import {
   Check,
 } from "lucide-react";
 import React from "react";
+import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   type Risk = {
@@ -66,6 +68,7 @@ export default function Home() {
     number | null
   >(null);
   const [sort, setSort] = React.useState("score-desc");
+  const [searchQuery, setSearchQuery] = React.useState("");
 
   React.useEffect(() => {
     const savedRisks = localStorage.getItem("risks");
@@ -193,16 +196,39 @@ export default function Home() {
                 <SelectItem value="name-desc">Sort by Name (Z-A)</SelectItem>
               </SelectContent>
             </Select>
+            <Input
+              placeholder="Search risks..."
+              value={searchQuery}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setSearchQuery(e.target.value)
+              }
+              className="ml-auto max-w-sm"
+            />
           </>
         )}
         {risks.length === 0 && (
           <div className="w-full border border-dashed p-4 text-center">
             <h2 className="font-bold mt-10">
-              You haven&apos;t added any risks yet!
+              You haven&apos;t added any{" "}
+              <Link
+                href="https://www.youtube.com/watch?v=eO9vHakAloU"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:underline"
+              >
+                risks
+              </Link>{" "}
+              yet!
             </h2>
-
+            <Image
+              src="/explosion.png"
+              alt="No risks added"
+              width={512}
+              height={340}
+              className="mx-auto mt-6"
+            />
             <Button
-              className="mt-6 mb-10"
+              className="mb-10"
               onClick={() => {
                 setRisks((prev) => [
                   ...prev,
@@ -250,6 +276,22 @@ export default function Home() {
           }
           return 0;
         })
+        .filter(
+          (risk) =>
+            risk.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            risk.description
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase()) ||
+            risk.tags.some((tag) =>
+              tag.toLowerCase().includes(searchQuery.toLowerCase())
+            ) ||
+            risk.mitigation?.name
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase()) ||
+            risk.mitigation?.description
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase())
+        )
         .map((risk, index) => (
           <div
             key={index}
@@ -262,6 +304,7 @@ export default function Home() {
                 placeholder="Aliens can abduct the robot during matches"
                 value={risk.name}
                 className="w-full max-w-md bg-background h-10"
+                autoFocus={risk.isNew}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setRisks((prev) =>
                     prev.map((r, i) =>
@@ -270,7 +313,7 @@ export default function Home() {
                   )
                 }
               />
-              <p>Score:</p>
+              <p className="ml-4">Score:</p>
               <p
                 className={`border w-fit px-2 flex items-center h-10 font-mono relative ${getRiskScoreColor(
                   risk.score
@@ -384,7 +427,13 @@ export default function Home() {
               {risk.tags.length > 0 && (
                 <>
                   {risk.tags.map((tag, tIndex) => (
-                    <Button key={tIndex} variant="outline">
+                    <Button
+                      key={tIndex}
+                      variant="outline"
+                      onClick={() => {
+                        setSearchQuery(tag);
+                      }}
+                    >
                       {tag}
                     </Button>
                   ))}
@@ -645,14 +694,14 @@ export default function Home() {
                   );
                 }}
               >
-                Add Mitigation
+                Add Mitigation Plan
                 <Plus />
               </Button>
             )}
             {risk.mitigation && (
               <div className="mt-4 p-4 border-l-4 border-green-500 bg-green-950 flex flex-col space-y-2">
                 <h3 className="font-bold text-md flex flex-row items-center gap-2">
-                  Mitigation Plan
+                  Mitigation {risk.mitigated ? "" : " Plan"}
                   <Button
                     className="ml-auto"
                     onClick={() =>
@@ -681,7 +730,9 @@ export default function Home() {
                     onClick={() =>
                       setRisks((prev) =>
                         prev.map((r, i) =>
-                          i === index ? { ...r, mitigation: null } : r
+                          i === index
+                            ? { ...r, mitigation: null, mitigated: false }
+                            : r
                         )
                       )
                     }
