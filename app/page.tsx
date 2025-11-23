@@ -10,7 +10,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Save, Trash, X } from "lucide-react";
+import {
+  ArrowRight,
+  Plus,
+  Save,
+  Trash,
+  X,
+  ShieldCheck,
+  CheckCircle,
+} from "lucide-react";
 import React from "react";
 
 export default function Home() {
@@ -22,6 +30,7 @@ export default function Home() {
     detectability: 1 | 2 | 3 | 4 | 5;
     score: number;
     mitigation: Risk | null;
+    mitigated: boolean;
     isNew?: boolean;
   };
 
@@ -90,6 +99,13 @@ export default function Home() {
       return "bg-red-950/40 border border-l-4 border-red-600";
     }
   }
+
+  function getEffectiveScore(risk: Risk) {
+    if (risk.mitigated) {
+      return risk.mitigation?.score ?? risk.score;
+    }
+    return risk.score;
+  }
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-row gap-2">
@@ -120,6 +136,7 @@ export default function Home() {
                   detectability: 1,
                   score: 1,
                   mitigation: null,
+                  mitigated: false,
                   isNew: true,
                 },
               ];
@@ -154,9 +171,13 @@ export default function Home() {
             return 1;
           }
           if (sort === "score-asc") {
-            return a.score - b.score;
+            const aas = getEffectiveScore(a);
+            const bbs = getEffectiveScore(b);
+            return aas - bbs;
           } else if (sort === "score-desc") {
-            return b.score - a.score;
+            const aas = getEffectiveScore(a);
+            const bbs = getEffectiveScore(b);
+            return bbs - aas;
           } else if (sort === "name-asc") {
             return a.name.localeCompare(b.name);
           } else if (sort === "name-desc") {
@@ -168,14 +189,14 @@ export default function Home() {
           <div
             key={index}
             className={`p-4 mb-4 flex gap-2 flex-col ${getRiskCardClasses(
-              risk.score
+              getEffectiveScore(risk)
             )}`}
           >
-            <h2 className="text-lg font-bold mb-2 flex flex-row gap-4">
+            <h2 className="text-lg font-bold mb-2 flex flex-row gap-4 items-center">
               <Input
                 placeholder="Aliens can abduct the robot during matches"
                 value={risk.name}
-                className="w-full max-w-md bg-background"
+                className="w-full max-w-md bg-background h-10"
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setRisks((prev) =>
                     prev.map((r, i) =>
@@ -185,12 +206,38 @@ export default function Home() {
                 }
               />
               <p
-                className={`border w-fit px-2 flex items-center ${getRiskScoreColor(
+                className={`border w-fit px-2 flex items-center h-10 font-mono relative ${getRiskScoreColor(
                   risk.score
                 )}`}
+                style={{
+                  textDecoration: "none",
+                  opacity: risk.mitigated ? 0.5 : 1,
+                }}
               >
-                {risk.score}
+                {Number.isFinite(risk.score)
+                  ? String(Math.round(risk.score)).padStart(3, "0")
+                  : "000"}
               </p>
+              {risk.mitigation && (
+                <>
+                  <ArrowRight className="inline-block" />
+                  <p
+                    className={`border w-fit px-2 flex items-center h-10 font-mono relative ${getRiskScoreColor(
+                      risk.mitigation?.score ?? 0
+                    )}`}
+                    style={{
+                      textDecoration: "none",
+                      opacity: !risk.mitigated ? 0.5 : 1,
+                    }}
+                  >
+                    {Number.isFinite(risk.mitigation?.score ?? 0)
+                      ? String(
+                          Math.round(risk.mitigation?.score ?? 0)
+                        ).padStart(3, "0")
+                      : "000"}
+                  </p>
+                </>
+              )}
               <div className="ml-auto flex items-center gap-2">
                 {risk.isNew ? (
                   <>
@@ -269,7 +316,9 @@ export default function Home() {
             />
             <div className="flex flex-row gap-4">
               <div className="w-full">
-                <Label className="mb-1">Likelihood:</Label>
+                <Label className="mb-1 text-muted-foreground">
+                  Likelihood:
+                </Label>
                 <Select
                   defaultValue={risk.likelihood.toString()}
                   onValueChange={(v) =>
@@ -303,7 +352,7 @@ export default function Home() {
                 </Select>
               </div>
               <div className="w-full">
-                <Label className="mb-1">Impact:</Label>
+                <Label className="mb-1 text-muted-foreground">Impact:</Label>
                 <Select
                   defaultValue={risk.impact.toString()}
                   onValueChange={(v) =>
@@ -337,7 +386,9 @@ export default function Home() {
                 </Select>
               </div>
               <div className="w-full">
-                <Label className="mb-1">Detectability:</Label>
+                <Label className="mb-1 text-muted-foreground">
+                  Detectability:
+                </Label>
                 <Select
                   defaultValue={risk.detectability.toString()}
                   onValueChange={(v) =>
@@ -372,6 +423,243 @@ export default function Home() {
                 </Select>
               </div>
             </div>
+            {risk.mitigation === null && (
+              <Button
+                onClick={() => {
+                  setRisks((prev) =>
+                    prev.map((r, i) =>
+                      i === index
+                        ? {
+                            ...r,
+                            mitigation: {
+                              name: "",
+                              description: "",
+                              likelihood: 1,
+                              impact: 1,
+                              detectability: 1,
+                              score: 1,
+                              mitigation: null,
+                              mitigated: false,
+                            },
+                          }
+                        : r
+                    )
+                  );
+                }}
+              >
+                Add Mitigation
+                <Plus />
+              </Button>
+            )}
+            {risk.mitigation && (
+              <div className="mt-4 p-4 border-l-4 border-green-500 bg-green-950 flex flex-col gap-2">
+                <h3 className="font-bold text-md flex flex-row items-center gap-2">
+                  Mitigation Plan
+                  <Button
+                    className="ml-auto"
+                    onClick={() =>
+                      setRisks((prev) =>
+                        prev.map((r, i) =>
+                          i === index ? { ...r, mitigated: !r.mitigated } : r
+                        )
+                      )
+                    }
+                  >
+                    {risk.mitigated ? (
+                      <>
+                        <span>Mitigated</span>
+                        <CheckCircle />
+                      </>
+                    ) : (
+                      <>
+                        <span>Mark as Mitigated</span>
+                        <ShieldCheck />
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    className=""
+                    variant="destructive"
+                    onClick={() =>
+                      setRisks((prev) =>
+                        prev.map((r, i) =>
+                          i === index ? { ...r, mitigation: null } : r
+                        )
+                      )
+                    }
+                  >
+                    <Trash />
+                  </Button>
+                </h3>
+                <Input
+                  placeholder="Use anti-gravity tethers to prevent abduction."
+                  value={risk.mitigation.name}
+                  className="w-full max-w-md bg-background"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setRisks((prev) =>
+                      prev.map((r, i) =>
+                        i === index
+                          ? {
+                              ...r,
+                              mitigation: {
+                                ...r.mitigation!,
+                                name: e.target.value,
+                              },
+                            }
+                          : r
+                      )
+                    )
+                  }
+                />
+                <Textarea
+                  placeholder="Equip the robot with anti-gravity tethers that deploy when UFOs are detected nearby, preventing abduction during matches."
+                  value={risk.mitigation.description}
+                  className="w-full max-w-md bg-background"
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    setRisks((prev) =>
+                      prev.map((r, i) =>
+                        i === index
+                          ? {
+                              ...r,
+                              mitigation: {
+                                ...r.mitigation!,
+                                description: e.target.value,
+                              },
+                            }
+                          : r
+                      )
+                    )
+                  }
+                />
+                <h3 className="font-semibold">New scores:</h3>
+                <div className="flex flex-row gap-2 w-full">
+                  <div className="w-full">
+                    <Label className="text-sm text-muted-foreground">
+                      Likelihood:
+                    </Label>
+                    <Select
+                      defaultValue={risk.mitigation.likelihood.toString()}
+                      onValueChange={(v) =>
+                        setRisks((prev) =>
+                          prev.map((r, i) =>
+                            i === index
+                              ? {
+                                  ...r,
+                                  mitigation: {
+                                    ...r.mitigation!,
+                                    likelihood: Number(v) as 1 | 2 | 3 | 4 | 5,
+                                    score: calculateRiskScore(
+                                      Number(v) as 1 | 2 | 3 | 4 | 5,
+                                      r.mitigation!.impact,
+                                      r.mitigation!.detectability
+                                    ),
+                                  },
+                                }
+                              : r
+                          )
+                        )
+                      }
+                    >
+                      <SelectTrigger className="w-full bg-background">
+                        <SelectValue placeholder="Select Risk Level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[1, 2, 3, 4, 5].map((level) => (
+                          <SelectItem key={level} value={level.toString()}>
+                            {level}:{" "}
+                            {likelihoodLevels[level as 1 | 2 | 3 | 4 | 5]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="w-full">
+                    <Label className="text-sm text-muted-foreground">
+                      Impact:
+                    </Label>
+                    <Select
+                      defaultValue={risk.mitigation.impact.toString()}
+                      onValueChange={(v) =>
+                        setRisks((prev) =>
+                          prev.map((r, i) =>
+                            i === index
+                              ? {
+                                  ...r,
+                                  mitigation: {
+                                    ...r.mitigation!,
+                                    impact: Number(v) as 1 | 2 | 3 | 4 | 5,
+                                    score: calculateRiskScore(
+                                      r.mitigation!.likelihood,
+                                      Number(v) as 1 | 2 | 3 | 4 | 5,
+                                      r.mitigation!.detectability
+                                    ),
+                                  },
+                                }
+                              : r
+                          )
+                        )
+                      }
+                    >
+                      <SelectTrigger className="w-full bg-background">
+                        <SelectValue placeholder="Select Risk Level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[1, 2, 3, 4, 5].map((level) => (
+                          <SelectItem key={level} value={level.toString()}>
+                            {level}: {impactLevels[level as 1 | 2 | 3 | 4 | 5]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="w-full">
+                    <Label className="text-sm text-muted-foreground">
+                      Detectability:
+                    </Label>
+                    <Select
+                      defaultValue={risk.mitigation.detectability.toString()}
+                      onValueChange={(v) =>
+                        setRisks((prev) =>
+                          prev.map((r, i) =>
+                            i === index
+                              ? {
+                                  ...r,
+                                  mitigation: {
+                                    ...r.mitigation!,
+                                    detectability: Number(v) as
+                                      | 1
+                                      | 2
+                                      | 3
+                                      | 4
+                                      | 5,
+                                    score: calculateRiskScore(
+                                      r.mitigation!.likelihood,
+                                      r.mitigation!.impact,
+                                      Number(v) as 1 | 2 | 3 | 4 | 5
+                                    ),
+                                  },
+                                }
+                              : r
+                          )
+                        )
+                      }
+                    >
+                      <SelectTrigger className="w-full bg-background">
+                        <SelectValue placeholder="Select Risk Level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[1, 2, 3, 4, 5].map((level) => (
+                          <SelectItem key={level} value={level.toString()}>
+                            {level}:{" "}
+                            {detectabilityLevels[level as 1 | 2 | 3 | 4 | 5]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ))}
     </div>
