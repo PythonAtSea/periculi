@@ -1,5 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -10,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { DialogTrigger } from "@radix-ui/react-dialog";
 import {
   ArrowRight,
   Plus,
@@ -32,6 +34,7 @@ export default function Home() {
     mitigation: Risk | null;
     mitigated: boolean;
     isNew?: boolean;
+    tags: string[];
   };
 
   const likelihoodLevels = {
@@ -155,6 +158,7 @@ export default function Home() {
                       mitigation: null,
                       mitigated: false,
                       isNew: true,
+                      tags: [],
                     },
                   ];
                 });
@@ -201,6 +205,7 @@ export default function Home() {
                     mitigation: null,
                     mitigated: false,
                     isNew: true,
+                    tags: [],
                   },
                 ]);
               }}
@@ -364,6 +369,126 @@ export default function Home() {
                 )
               }
             />
+            <div className="flex flex-row gap-2">
+              {risk.tags.length > 0 && (
+                <>
+                  {risk.tags.map((tag, tIndex) => (
+                    <Button key={tIndex} variant="outline">
+                      {tag}
+                    </Button>
+                  ))}
+                </>
+              )}
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="default" className="w-fit">
+                    {risk.tags.length > 0 ? `Edit Tags` : "Add a Tag!"}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogTitle className="font-bold text-lg mb-4">
+                    Edit Tags
+                  </DialogTitle>
+                  {risk.tags === null || risk.tags.length === 0 ? (
+                    <p className="">
+                      No tags added yet, why not{" "}
+                      <button
+                        className="text-blue-500 hover:underline cursor-pointer"
+                        onClick={() => {
+                          setRisks((prev) =>
+                            prev.map((r, i) =>
+                              i === index ? { ...r, tags: ["New Tag"] } : r
+                            )
+                          );
+                        }}
+                      >
+                        add one
+                      </button>
+                      ?
+                    </p>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {risk.tags.map((tag, tIndex) => (
+                        <div key={tIndex} className="flex items-center gap-2">
+                          <Input
+                            value={tag}
+                            className="w-full max-w-md bg-background"
+                            onChange={(
+                              e: React.ChangeEvent<HTMLInputElement>
+                            ) =>
+                              setRisks((prev) =>
+                                prev.map((r, i) =>
+                                  i === index
+                                    ? {
+                                        ...r,
+                                        tags: r.tags.map((t, j) =>
+                                          j === tIndex ? e.target.value : t
+                                        ),
+                                      }
+                                    : r
+                                )
+                              )
+                            }
+                            onBlur={() => {
+                              if (tag === "") {
+                                setRisks((prev) =>
+                                  prev.map((r, i) =>
+                                    i === index
+                                      ? {
+                                          ...r,
+                                          tags: r.tags.filter(
+                                            (_, j) => j !== tIndex
+                                          ),
+                                        }
+                                      : r
+                                  )
+                                );
+                              }
+                            }}
+                          />
+                          <Button
+                            variant="destructive"
+                            onClick={() =>
+                              setRisks((prev) =>
+                                prev.map((r, i) =>
+                                  i === index
+                                    ? {
+                                        ...r,
+                                        tags: r.tags.filter(
+                                          (_, j) => j !== tIndex
+                                        ),
+                                      }
+                                    : r
+                                )
+                              )
+                            }
+                          >
+                            <Trash />
+                          </Button>
+                        </div>
+                      ))}
+
+                      <div className="flex gap-2 mt-3">
+                        <Button
+                          onClick={() =>
+                            setRisks((prev) =>
+                              prev.map((r, i) =>
+                                i === index
+                                  ? { ...r, tags: [...r.tags, "New Tag"] }
+                                  : r
+                              )
+                            )
+                          }
+                        >
+                          Add Tag
+                          <Plus />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
+            </div>
             <div className="flex flex-row gap-4">
               <div className="w-full">
                 <Label className="mb-1 text-muted-foreground">
@@ -492,6 +617,7 @@ export default function Home() {
                               score: 1,
                               mitigation: null,
                               mitigated: false,
+                              tags: [],
                             },
                           }
                         : r
