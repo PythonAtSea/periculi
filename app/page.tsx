@@ -109,58 +109,90 @@ export default function Home() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-row gap-2">
-        <Button
-          onClick={() => {
-            setRisks((prev) => {
-              const saved = prev.map((r) =>
-                r.isNew
-                  ? {
-                      ...r,
-                      isNew: false,
-                      score: calculateRiskScore(
-                        r.likelihood,
-                        r.impact,
-                        r.detectability
-                      ),
-                    }
-                  : r
-              );
+        {risks.length > 0 && (
+          <>
+            <Button
+              onClick={() => {
+                setRisks((prev) => {
+                  const saved = prev.map((r) =>
+                    r.isNew
+                      ? {
+                          ...r,
+                          isNew: false,
+                          score: calculateRiskScore(
+                            r.likelihood,
+                            r.impact,
+                            r.detectability
+                          ),
+                        }
+                      : r
+                  );
 
-              return [
-                ...saved,
-                {
-                  name: "",
-                  description: "",
-                  likelihood: 1,
-                  impact: 1,
-                  detectability: 1,
-                  score: 1,
-                  mitigation: null,
-                  mitigated: false,
-                  isNew: true,
-                },
-              ];
-            });
-          }}
-        >
-          Add Risk
-          <Plus />
-        </Button>
-        <Select value={sort} onValueChange={(value) => setSort(value)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Choose sorting system" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="score-desc">
-              Sort by Score (High to Low)
-            </SelectItem>
-            <SelectItem value="score-asc">
-              Sort by Score (Low to High)
-            </SelectItem>
-            <SelectItem value="name-asc">Sort by Name (A-Z)</SelectItem>
-            <SelectItem value="name-desc">Sort by Name (Z-A)</SelectItem>
-          </SelectContent>
-        </Select>
+                  return [
+                    ...saved,
+                    {
+                      name: "",
+                      description: "",
+                      likelihood: 1,
+                      impact: 1,
+                      detectability: 1,
+                      score: 1,
+                      mitigation: null,
+                      mitigated: false,
+                      isNew: true,
+                    },
+                  ];
+                });
+              }}
+            >
+              Add Risk
+              <Plus />
+            </Button>
+            <Select value={sort} onValueChange={(value) => setSort(value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose sorting system" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="score-desc">
+                  Sort by Score (High to Low)
+                </SelectItem>
+                <SelectItem value="score-asc">
+                  Sort by Score (Low to High)
+                </SelectItem>
+                <SelectItem value="name-asc">Sort by Name (A-Z)</SelectItem>
+                <SelectItem value="name-desc">Sort by Name (Z-A)</SelectItem>
+              </SelectContent>
+            </Select>
+          </>
+        )}
+        {risks.length === 0 && (
+          <div className="w-full border border-dashed p-4 text-center">
+            <h2 className="font-bold">You haven&apos;t added any risks yet!</h2>
+
+            <Button
+              className="mt-2"
+              onClick={() => {
+                setRisks((prev) => [
+                  ...prev,
+                  {
+                    name: "",
+                    description: "",
+                    likelihood: 1,
+                    impact: 1,
+                    detectability: 1,
+                    score: 1,
+                    mitigation: null,
+                    mitigated: false,
+                    isNew: true,
+                  },
+                ]);
+              }}
+            >
+              Add One!
+              <Plus />
+            </Button>
+          </div>
+        )}
       </div>
       {risks
         .sort((a, b) => {
@@ -320,7 +352,7 @@ export default function Home() {
                   Likelihood:
                 </Label>
                 <Select
-                  defaultValue={risk.likelihood.toString()}
+                  value={risk.likelihood.toString()}
                   onValueChange={(v) =>
                     setRisks((prev) =>
                       prev.map((r, i) =>
@@ -354,7 +386,7 @@ export default function Home() {
               <div className="w-full">
                 <Label className="mb-1 text-muted-foreground">Impact:</Label>
                 <Select
-                  defaultValue={risk.impact.toString()}
+                  value={risk.impact.toString()}
                   onValueChange={(v) =>
                     setRisks((prev) =>
                       prev.map((r, i) =>
@@ -390,7 +422,7 @@ export default function Home() {
                   Detectability:
                 </Label>
                 <Select
-                  defaultValue={risk.detectability.toString()}
+                  value={risk.detectability.toString()}
                   onValueChange={(v) =>
                     setRisks((prev) =>
                       prev.map((r, i) =>
