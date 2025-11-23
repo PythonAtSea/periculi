@@ -124,9 +124,20 @@ export default function Home() {
     }
     return risk.score;
   }
+
+  function getRandomTag() {
+    const tagList = [
+      "AUTO",
+      "TELEOP",
+      "BASE",
+      "Mechanical",
+      "Software",
+    ] as const;
+    return tagList[Math.floor(Math.random() * tagList.length)];
+  }
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-row gap-2">
+    <div className="flex flex-col gap-16">
+      <div className="flex flex-row gap-2 items-center">
         {risks.length > 0 && (
           <>
             <Button
@@ -242,11 +253,11 @@ export default function Home() {
         .map((risk, index) => (
           <div
             key={index}
-            className={`p-4 mb-4 flex gap-2 flex-col ${getRiskCardClasses(
+            className={`p-4 flex flex-col ${getRiskCardClasses(
               getEffectiveScore(risk)
             )}`}
           >
-            <h2 className="text-lg font-bold mb-2 flex flex-row gap-4 items-center">
+            <h2 className="text-lg font-bold flex flex-row gap-2 items-center">
               <Input
                 placeholder="Aliens can abduct the robot during matches"
                 value={risk.name}
@@ -360,7 +371,7 @@ export default function Home() {
             <Textarea
               placeholder="During a match, a UFO may hover over the field and teleport the robot away, causing us to instantly forfeit the match and lose valuable ranking points."
               value={risk.description}
-              className="w-full max-w-md bg-background"
+              className="w-full max-w-md bg-background mt-4"
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                 setRisks((prev) =>
                   prev.map((r, i) =>
@@ -369,7 +380,7 @@ export default function Home() {
                 )
               }
             />
-            <div className="flex flex-row gap-2">
+            <div className="flex flex-row gap-2 mt-4">
               {risk.tags.length > 0 && (
                 <>
                   {risk.tags.map((tag, tIndex) => (
@@ -397,7 +408,12 @@ export default function Home() {
                         onClick={() => {
                           setRisks((prev) =>
                             prev.map((r, i) =>
-                              i === index ? { ...r, tags: ["New Tag"] } : r
+                              i === index
+                                ? {
+                                    ...r,
+                                    tags: [getRandomTag()],
+                                  }
+                                : r
                             )
                           );
                         }}
@@ -474,7 +490,10 @@ export default function Home() {
                             setRisks((prev) =>
                               prev.map((r, i) =>
                                 i === index
-                                  ? { ...r, tags: [...r.tags, "New Tag"] }
+                                  ? {
+                                      ...r,
+                                      tags: [...r.tags, getRandomTag()],
+                                    }
                                   : r
                               )
                             )
@@ -489,7 +508,7 @@ export default function Home() {
                 </DialogContent>
               </Dialog>
             </div>
-            <div className="flex flex-row gap-4">
+            <div className="flex flex-row gap-2 mt-4">
               <div className="w-full">
                 <Label className="mb-1 text-muted-foreground">
                   Likelihood:
@@ -601,6 +620,7 @@ export default function Home() {
             {risk.mitigation === null && (
               <Button
                 variant="secondary"
+                className="mt-4"
                 onClick={() => {
                   setRisks((prev) =>
                     prev.map((r, i) =>
@@ -630,7 +650,7 @@ export default function Home() {
               </Button>
             )}
             {risk.mitigation && (
-              <div className="mt-4 p-4 border-l-4 border-green-500 bg-green-950 flex flex-col gap-2">
+              <div className="mt-4 p-4 border-l-4 border-green-500 bg-green-950 flex flex-col space-y-2">
                 <h3 className="font-bold text-md flex flex-row items-center gap-2">
                   Mitigation Plan
                   <Button
@@ -709,7 +729,7 @@ export default function Home() {
                     )
                   }
                 />
-                <h3 className="font-semibold">New scores:</h3>
+                <h3 className="font-semibold mt-4">New scores:</h3>
                 <div className="flex flex-row gap-2 w-full">
                   <div className="w-full">
                     <Label className="text-sm text-muted-foreground">
