@@ -17,7 +17,7 @@ import {
   Trash,
   X,
   ShieldCheck,
-  CheckCircle,
+  Check,
 } from "lucide-react";
 import React from "react";
 
@@ -63,6 +63,21 @@ export default function Home() {
     number | null
   >(null);
   const [sort, setSort] = React.useState("score-desc");
+
+  React.useEffect(() => {
+    const savedRisks = localStorage.getItem("risks");
+    if (savedRisks) {
+      try {
+        setRisks(JSON.parse(savedRisks));
+      } catch (error) {
+        console.error("Failed to parse risks from localStorage:", error);
+      }
+    }
+  }, []);
+
+  React.useEffect(() => {
+    localStorage.setItem("risks", JSON.stringify(risks));
+  }, [risks]);
 
   function calculateRiskScore(
     likelihood: number,
@@ -167,10 +182,12 @@ export default function Home() {
         )}
         {risks.length === 0 && (
           <div className="w-full border border-dashed p-4 text-center">
-            <h2 className="font-bold">You haven&apos;t added any risks yet!</h2>
+            <h2 className="font-bold mt-10">
+              You haven&apos;t added any risks yet!
+            </h2>
 
             <Button
-              className="mt-2"
+              className="mt-6 mb-10"
               onClick={() => {
                 setRisks((prev) => [
                   ...prev,
@@ -237,6 +254,7 @@ export default function Home() {
                   )
                 }
               />
+              <p>Score:</p>
               <p
                 className={`border w-fit px-2 flex items-center h-10 font-mono relative ${getRiskScoreColor(
                   risk.score
@@ -457,12 +475,14 @@ export default function Home() {
             </div>
             {risk.mitigation === null && (
               <Button
+                variant="secondary"
                 onClick={() => {
                   setRisks((prev) =>
                     prev.map((r, i) =>
                       i === index
                         ? {
                             ...r,
+                            isNew: false,
                             mitigation: {
                               name: "",
                               description: "",
@@ -500,7 +520,7 @@ export default function Home() {
                     {risk.mitigated ? (
                       <>
                         <span>Mitigated</span>
-                        <CheckCircle />
+                        <Check />
                       </>
                     ) : (
                       <>
