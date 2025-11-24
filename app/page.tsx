@@ -26,14 +26,14 @@ import Image from "next/image";
 import Link from "next/link";
 
 export default function Home() {
-  type Risk = {
+  type Hazard = {
     name: string;
     description: string;
     likelihood: 1 | 2 | 3 | 4 | 5;
     impact: 1 | 2 | 3 | 4 | 5;
     detectability: 1 | 2 | 3 | 4 | 5;
     score: number;
-    mitigation: Risk | null;
+    mitigation: Hazard | null;
     mitigated: boolean;
     isNew?: boolean;
     tags: string[];
@@ -63,7 +63,7 @@ export default function Home() {
     5: "Almost impossible to detect before failure happens.",
   };
 
-  const [risks, setRisks] = React.useState<Risk[]>([]);
+  const [hazards, setHazards] = React.useState<Hazard[]>([]);
   const [confirmDeleteIndex, setConfirmDeleteIndex] = React.useState<
     number | null
   >(null);
@@ -71,21 +71,21 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = React.useState("");
 
   React.useEffect(() => {
-    const savedRisks = localStorage.getItem("risks");
-    if (savedRisks) {
+    const savedHazards = localStorage.getItem("hazards");
+    if (savedHazards) {
       try {
-        setRisks(JSON.parse(savedRisks));
+        setHazards(JSON.parse(savedHazards));
       } catch (error) {
-        console.error("Failed to parse risks from localStorage:", error);
+        console.error("Failed to parse hazards from localStorage:", error);
       }
     }
   }, []);
 
   React.useEffect(() => {
-    localStorage.setItem("risks", JSON.stringify(risks));
-  }, [risks]);
+    localStorage.setItem("hazards", JSON.stringify(hazards));
+  }, [hazards]);
 
-  function calculateRiskScore(
+  function calculateHazardScore(
     likelihood: number,
     impact: number,
     detectability: number
@@ -93,7 +93,7 @@ export default function Home() {
     return likelihood * impact * detectability;
   }
 
-  function getRiskScoreColor(score: number) {
+  function getHazardScoreColor(score: number) {
     if (!Number.isFinite(score)) return "border";
 
     if (score <= 10) {
@@ -107,7 +107,7 @@ export default function Home() {
     }
   }
 
-  function getRiskCardClasses(score: number) {
+  function getHazardCardClasses(score: number) {
     if (!Number.isFinite(score)) return "border";
 
     if (score <= 10) {
@@ -121,11 +121,11 @@ export default function Home() {
     }
   }
 
-  function getEffectiveScore(risk: Risk) {
-    if (risk.mitigated) {
-      return risk.mitigation?.score ?? risk.score;
+  function getEffectiveScore(hazard: Hazard) {
+    if (hazard.mitigated) {
+      return hazard.mitigation?.score ?? hazard.score;
     }
-    return risk.score;
+    return hazard.score;
   }
 
   function getRandomTag() {
@@ -138,42 +138,42 @@ export default function Home() {
     ] as const;
     return tagList[Math.floor(Math.random() * tagList.length)];
   }
-  function getRiskBucketCounts() {
-    const nonNewRisks = risks.filter((r) => !r.isNew);
-    const low = nonNewRisks.filter((r) => getEffectiveScore(r) <= 10).length;
-    const medium = nonNewRisks.filter(
-      (r) => getEffectiveScore(r) > 10 && getEffectiveScore(r) <= 40
+  function getHazardBucketCounts() {
+    const nonNewHazards = hazards.filter((h) => !h.isNew);
+    const low = nonNewHazards.filter((h) => getEffectiveScore(h) <= 10).length;
+    const medium = nonNewHazards.filter(
+      (h) => getEffectiveScore(h) > 10 && getEffectiveScore(h) <= 40
     ).length;
-    const high = nonNewRisks.filter(
-      (r) => getEffectiveScore(r) > 40 && getEffectiveScore(r) <= 80
+    const high = nonNewHazards.filter(
+      (h) => getEffectiveScore(h) > 40 && getEffectiveScore(h) <= 80
     ).length;
-    const critical = nonNewRisks.filter(
-      (r) => getEffectiveScore(r) > 80
+    const critical = nonNewHazards.filter(
+      (h) => getEffectiveScore(h) > 80
     ).length;
 
-    return { low, medium, high, critical, total: nonNewRisks.length };
+    return { low, medium, high, critical, total: nonNewHazards.length };
   }
 
   return (
     <div className="flex flex-col gap-16">
       <div className="flex flex-row gap-2 items-center">
-        {risks.length > 0 && (
+        {hazards.length > 0 && (
           <>
             <Button
               onClick={() => {
-                setRisks((prev) => {
-                  const saved = prev.map((r) =>
-                    r.isNew
+                setHazards((prev) => {
+                  const saved = prev.map((h) =>
+                    h.isNew
                       ? {
-                          ...r,
+                          ...h,
                           isNew: false,
-                          score: calculateRiskScore(
-                            r.likelihood,
-                            r.impact,
-                            r.detectability
+                          score: calculateHazardScore(
+                            h.likelihood,
+                            h.impact,
+                            h.detectability
                           ),
                         }
-                      : r
+                      : h
                   );
 
                   return [
@@ -194,7 +194,7 @@ export default function Home() {
                 });
               }}
             >
-              Add Risk
+              Add Hazard
               <Plus />
             </Button>
             <Select value={sort} onValueChange={(value) => setSort(value)}>
@@ -215,29 +215,29 @@ export default function Home() {
             <div className="border-2 h-9 flex items-center px-2 justify-center">
               <p>
                 <span className="text-muted-foreground">Low:</span>{" "}
-                {getRiskBucketCounts().low}
+                {getHazardBucketCounts().low}
               </p>
             </div>
             <div className="border-2 border-yellow-500 bg-yellow-950 h-9 flex items-center px-2 justify-center">
               <p>
                 <span className="text-muted-foreground">Medium:</span>{" "}
-                {getRiskBucketCounts().medium}
+                {getHazardBucketCounts().medium}
               </p>
             </div>
             <div className="border-2 border-orange-500 bg-orange-950 h-9 flex items-center px-2 justify-center">
               <p>
                 <span className="text-muted-foreground">High:</span>{" "}
-                {getRiskBucketCounts().high}
+                {getHazardBucketCounts().high}
               </p>
             </div>
             <div className="border-2 border-red-500 bg-red-950 h-9 flex items-center px-2 justify-center">
               <p>
                 <span className="text-muted-foreground">Critical:</span>{" "}
-                {getRiskBucketCounts().critical}
+                {getHazardBucketCounts().critical}
               </p>
             </div>
             <Input
-              placeholder="Search risks..."
+              placeholder="Search hazards..."
               value={searchQuery}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setSearchQuery(e.target.value)
@@ -246,7 +246,7 @@ export default function Home() {
             />
           </>
         )}
-        {risks.length === 0 && (
+        {hazards.length === 0 && (
           <div className="w-full border border-dashed p-4 text-center">
             <h2 className="font-bold mt-10">
               You haven&apos;t added any{" "}
@@ -256,13 +256,13 @@ export default function Home() {
                 rel="noopener noreferrer"
                 className="text-blue-500 hover:underline"
               >
-                risks
+                hazards
               </Link>{" "}
               yet!
             </h2>
             <Image
               src="/explosion.png"
-              alt="No risks added"
+              alt="No hazards added"
               width={512}
               height={340}
               className="mx-auto mt-6"
@@ -270,7 +270,7 @@ export default function Home() {
             <Button
               className="mb-10"
               onClick={() => {
-                setRisks((prev) => [
+                setHazards((prev) => [
                   ...prev,
                   {
                     name: "",
@@ -293,7 +293,7 @@ export default function Home() {
           </div>
         )}
       </div>
-      {risks
+      {hazards
         .sort((a, b) => {
           if (a.isNew) {
             return -1;
@@ -317,94 +317,94 @@ export default function Home() {
           return 0;
         })
         .filter(
-          (risk) =>
-            risk.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            risk.description
+          (hazard) =>
+            hazard.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            hazard.description
               .toLowerCase()
               .includes(searchQuery.toLowerCase()) ||
-            risk.tags.some((tag) =>
+            hazard.tags.some((tag) =>
               tag.toLowerCase().includes(searchQuery.toLowerCase())
             ) ||
-            risk.mitigation?.name
+            hazard.mitigation?.name
               .toLowerCase()
               .includes(searchQuery.toLowerCase()) ||
-            risk.mitigation?.description
+            hazard.mitigation?.description
               .toLowerCase()
               .includes(searchQuery.toLowerCase())
         )
-        .map((risk, index) => (
+        .map((hazard, index) => (
           <div
             key={index}
-            className={`p-4 flex flex-col ${getRiskCardClasses(
-              getEffectiveScore(risk)
+            className={`p-4 flex flex-col ${getHazardCardClasses(
+              getEffectiveScore(hazard)
             )}`}
           >
             <h2 className="text-lg font-bold flex flex-row gap-2 items-center">
               <Input
                 placeholder="Aliens can abduct the robot during matches"
-                value={risk.name}
+                value={hazard.name}
                 className="w-full max-w-md bg-background h-10"
-                autoFocus={risk.isNew}
+                autoFocus={hazard.isNew}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setRisks((prev) =>
-                    prev.map((r, i) =>
-                      i === index ? { ...r, name: e.target.value } : r
+                  setHazards((prev) =>
+                    prev.map((h, i) =>
+                      i === index ? { ...h, name: e.target.value } : h
                     )
                   )
                 }
               />
               <p className="ml-4">Score:</p>
               <p
-                className={`border w-fit px-2 flex items-center h-10 font-mono relative ${getRiskScoreColor(
-                  risk.score
+                className={`border w-fit px-2 flex items-center h-10 font-mono relative ${getHazardScoreColor(
+                  hazard.score
                 )}`}
                 style={{
                   textDecoration: "none",
-                  opacity: risk.mitigated ? 0.5 : 1,
+                  opacity: hazard.mitigated ? 0.5 : 1,
                 }}
               >
-                {Number.isFinite(risk.score)
-                  ? String(Math.round(risk.score)).padStart(3, "0")
+                {Number.isFinite(hazard.score)
+                  ? String(Math.round(hazard.score)).padStart(3, "0")
                   : "000"}
               </p>
-              {risk.mitigation && (
+              {hazard.mitigation && (
                 <>
                   <ArrowRight className="inline-block" />
                   <p
-                    className={`border w-fit px-2 flex items-center h-10 font-mono relative ${getRiskScoreColor(
-                      risk.mitigation?.score ?? 0
+                    className={`border w-fit px-2 flex items-center h-10 font-mono relative ${getHazardScoreColor(
+                      hazard.mitigation?.score ?? 0
                     )}`}
                     style={{
                       textDecoration: "none",
-                      opacity: !risk.mitigated ? 0.5 : 1,
+                      opacity: !hazard.mitigated ? 0.5 : 1,
                     }}
                   >
-                    {Number.isFinite(risk.mitigation?.score ?? 0)
+                    {Number.isFinite(hazard.mitigation?.score ?? 0)
                       ? String(
-                          Math.round(risk.mitigation?.score ?? 0)
+                          Math.round(hazard.mitigation?.score ?? 0)
                         ).padStart(3, "0")
                       : "000"}
                   </p>
                 </>
               )}
               <div className="ml-auto flex items-center gap-2">
-                {risk.isNew ? (
+                {hazard.isNew ? (
                   <>
                     <Button
                       onClick={() => {
-                        setRisks((prev) =>
-                          prev.map((r, i) =>
+                        setHazards((prev) =>
+                          prev.map((h, i) =>
                             i === index
                               ? {
-                                  ...r,
+                                  ...h,
                                   isNew: false,
-                                  score: calculateRiskScore(
-                                    r.likelihood,
-                                    r.impact,
-                                    r.detectability
+                                  score: calculateHazardScore(
+                                    h.likelihood,
+                                    h.impact,
+                                    h.detectability
                                   ),
                                 }
-                              : r
+                              : h
                           )
                         );
                       }}
@@ -414,7 +414,7 @@ export default function Home() {
                     <Button
                       variant="outline"
                       onClick={() =>
-                        setRisks((prev) => prev.filter((_, i) => i !== index))
+                        setHazards((prev) => prev.filter((_, i) => i !== index))
                       }
                     >
                       <Trash />
@@ -426,7 +426,7 @@ export default function Home() {
                       variant="destructive"
                       onClick={() => {
                         if (confirmDeleteIndex === index) {
-                          setRisks((prev) =>
+                          setHazards((prev) =>
                             prev.filter((_, i) => i !== index)
                           );
                           setConfirmDeleteIndex(null);
@@ -453,20 +453,20 @@ export default function Home() {
             </h2>
             <Textarea
               placeholder="During a match, a UFO may hover over the field and teleport the robot away, causing us to instantly forfeit the match and lose valuable ranking points."
-              value={risk.description}
+              value={hazard.description}
               className="w-full max-w-md bg-background mt-4"
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                setRisks((prev) =>
-                  prev.map((r, i) =>
-                    i === index ? { ...r, description: e.target.value } : r
+                setHazards((prev) =>
+                  prev.map((h, i) =>
+                    i === index ? { ...h, description: e.target.value } : h
                   )
                 )
               }
             />
             <div className="flex flex-row gap-2 mt-4">
-              {risk.tags.length > 0 && (
+              {hazard.tags.length > 0 && (
                 <>
-                  {risk.tags.map((tag, tIndex) => (
+                  {hazard.tags.map((tag, tIndex) => (
                     <Button
                       key={tIndex}
                       variant="outline"
@@ -482,27 +482,27 @@ export default function Home() {
               <Dialog>
                 <DialogTrigger asChild>
                   <Button variant="default" className="w-fit">
-                    {risk.tags.length > 0 ? `Edit Tags` : "Add a Tag!"}
+                    {hazard.tags.length > 0 ? `Edit Tags` : "Add a Tag!"}
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogTitle className="font-bold text-lg mb-4">
                     Edit Tags
                   </DialogTitle>
-                  {risk.tags === null || risk.tags.length === 0 ? (
+                  {hazard.tags === null || hazard.tags.length === 0 ? (
                     <p className="">
                       No tags added yet, why not{" "}
                       <button
                         className="text-blue-500 hover:underline cursor-pointer"
                         onClick={() => {
-                          setRisks((prev) =>
-                            prev.map((r, i) =>
+                          setHazards((prev) =>
+                            prev.map((h, i) =>
                               i === index
                                 ? {
-                                    ...r,
+                                    ...h,
                                     tags: [getRandomTag()],
                                   }
-                                : r
+                                : h
                             )
                           );
                         }}
@@ -513,7 +513,7 @@ export default function Home() {
                     </p>
                   ) : (
                     <div className="flex flex-col gap-2">
-                      {risk.tags.map((tag, tIndex) => (
+                      {hazard.tags.map((tag, tIndex) => (
                         <div key={tIndex} className="flex items-center gap-2">
                           <Input
                             value={tag}
@@ -521,31 +521,31 @@ export default function Home() {
                             onChange={(
                               e: React.ChangeEvent<HTMLInputElement>
                             ) =>
-                              setRisks((prev) =>
-                                prev.map((r, i) =>
+                              setHazards((prev) =>
+                                prev.map((h, i) =>
                                   i === index
                                     ? {
-                                        ...r,
-                                        tags: r.tags.map((t, j) =>
+                                        ...h,
+                                        tags: h.tags.map((t, j) =>
                                           j === tIndex ? e.target.value : t
                                         ),
                                       }
-                                    : r
+                                    : h
                                 )
                               )
                             }
                             onBlur={() => {
                               if (tag === "") {
-                                setRisks((prev) =>
-                                  prev.map((r, i) =>
+                                setHazards((prev) =>
+                                  prev.map((h, i) =>
                                     i === index
                                       ? {
-                                          ...r,
-                                          tags: r.tags.filter(
+                                          ...h,
+                                          tags: h.tags.filter(
                                             (_, j) => j !== tIndex
                                           ),
                                         }
-                                      : r
+                                      : h
                                   )
                                 );
                               }
@@ -554,16 +554,16 @@ export default function Home() {
                           <Button
                             variant="destructive"
                             onClick={() =>
-                              setRisks((prev) =>
-                                prev.map((r, i) =>
+                              setHazards((prev) =>
+                                prev.map((h, i) =>
                                   i === index
                                     ? {
-                                        ...r,
-                                        tags: r.tags.filter(
+                                        ...h,
+                                        tags: h.tags.filter(
                                           (_, j) => j !== tIndex
                                         ),
                                       }
-                                    : r
+                                    : h
                                 )
                               )
                             }
@@ -576,14 +576,14 @@ export default function Home() {
                       <div className="flex gap-2 mt-3">
                         <Button
                           onClick={() =>
-                            setRisks((prev) =>
-                              prev.map((r, i) =>
+                            setHazards((prev) =>
+                              prev.map((h, i) =>
                                 i === index
                                   ? {
-                                      ...r,
-                                      tags: [...r.tags, getRandomTag()],
+                                      ...h,
+                                      tags: [...h.tags, getRandomTag()],
                                     }
-                                  : r
+                                  : h
                               )
                             )
                           }
@@ -603,27 +603,27 @@ export default function Home() {
                   Likelihood:
                 </Label>
                 <Select
-                  value={risk.likelihood.toString()}
+                  value={hazard.likelihood.toString()}
                   onValueChange={(v) =>
-                    setRisks((prev) =>
-                      prev.map((r, i) =>
+                    setHazards((prev) =>
+                      prev.map((h, i) =>
                         i === index
                           ? {
-                              ...r,
+                              ...h,
                               likelihood: Number(v) as 1 | 2 | 3 | 4 | 5,
-                              score: calculateRiskScore(
+                              score: calculateHazardScore(
                                 Number(v) as 1 | 2 | 3 | 4 | 5,
-                                r.impact,
-                                r.detectability
+                                h.impact,
+                                h.detectability
                               ),
                             }
-                          : r
+                          : h
                       )
                     )
                   }
                 >
                   <SelectTrigger className="w-full bg-background">
-                    <SelectValue placeholder="Select Risk Level" />
+                    <SelectValue placeholder="Select Hazard Level" />
                   </SelectTrigger>
                   <SelectContent>
                     {[1, 2, 3, 4, 5].map((level) => (
@@ -637,27 +637,27 @@ export default function Home() {
               <div className="w-full">
                 <Label className="mb-1 text-muted-foreground">Impact:</Label>
                 <Select
-                  value={risk.impact.toString()}
+                  value={hazard.impact.toString()}
                   onValueChange={(v) =>
-                    setRisks((prev) =>
-                      prev.map((r, i) =>
+                    setHazards((prev) =>
+                      prev.map((h, i) =>
                         i === index
                           ? {
-                              ...r,
+                              ...h,
                               impact: Number(v) as 1 | 2 | 3 | 4 | 5,
-                              score: calculateRiskScore(
-                                r.likelihood,
+                              score: calculateHazardScore(
+                                h.likelihood,
                                 Number(v) as 1 | 2 | 3 | 4 | 5,
-                                r.detectability
+                                h.detectability
                               ),
                             }
-                          : r
+                          : h
                       )
                     )
                   }
                 >
                   <SelectTrigger className="w-full bg-background">
-                    <SelectValue placeholder="Select Risk Level" />
+                    <SelectValue placeholder="Select Hazard Level" />
                   </SelectTrigger>
                   <SelectContent>
                     {[1, 2, 3, 4, 5].map((level) => (
@@ -673,27 +673,27 @@ export default function Home() {
                   Detectability:
                 </Label>
                 <Select
-                  value={risk.detectability.toString()}
+                  value={hazard.detectability.toString()}
                   onValueChange={(v) =>
-                    setRisks((prev) =>
-                      prev.map((r, i) =>
+                    setHazards((prev) =>
+                      prev.map((h, i) =>
                         i === index
                           ? {
-                              ...r,
+                              ...h,
                               detectability: Number(v) as 1 | 2 | 3 | 4 | 5,
-                              score: calculateRiskScore(
-                                r.likelihood,
-                                r.impact,
+                              score: calculateHazardScore(
+                                h.likelihood,
+                                h.impact,
                                 Number(v) as 1 | 2 | 3 | 4 | 5
                               ),
                             }
-                          : r
+                          : h
                       )
                     )
                   }
                 >
                   <SelectTrigger className="w-full bg-background">
-                    <SelectValue placeholder="Select Risk Level" />
+                    <SelectValue placeholder="Select Hazard Level" />
                   </SelectTrigger>
                   <SelectContent>
                     {[1, 2, 3, 4, 5].map((level) => (
@@ -706,16 +706,16 @@ export default function Home() {
                 </Select>
               </div>
             </div>
-            {risk.mitigation === null && (
+            {hazard.mitigation === null && (
               <Button
                 variant="secondary"
                 className="mt-4"
                 onClick={() => {
-                  setRisks((prev) =>
-                    prev.map((r, i) =>
+                  setHazards((prev) =>
+                    prev.map((h, i) =>
                       i === index
                         ? {
-                            ...r,
+                            ...h,
                             isNew: false,
                             mitigation: {
                               name: "",
@@ -729,7 +729,7 @@ export default function Home() {
                               tags: [],
                             },
                           }
-                        : r
+                        : h
                     )
                   );
                 }}
@@ -738,21 +738,21 @@ export default function Home() {
                 <Plus />
               </Button>
             )}
-            {risk.mitigation && (
+            {hazard.mitigation && (
               <div className="mt-4 p-4 border-l-4 border-green-500 bg-green-950 flex flex-col space-y-2">
                 <h3 className="font-bold text-md flex flex-row items-center gap-2">
-                  Mitigation {risk.mitigated ? "" : " Plan"}
+                  Mitigation {hazard.mitigated ? "" : " Plan"}
                   <Button
                     className="ml-auto"
                     onClick={() =>
-                      setRisks((prev) =>
-                        prev.map((r, i) =>
-                          i === index ? { ...r, mitigated: !r.mitigated } : r
+                      setHazards((prev) =>
+                        prev.map((h, i) =>
+                          i === index ? { ...h, mitigated: !h.mitigated } : h
                         )
                       )
                     }
                   >
-                    {risk.mitigated ? (
+                    {hazard.mitigated ? (
                       <>
                         <span>Mitigated</span>
                         <Check />
@@ -768,11 +768,11 @@ export default function Home() {
                     className=""
                     variant="destructive"
                     onClick={() =>
-                      setRisks((prev) =>
-                        prev.map((r, i) =>
+                      setHazards((prev) =>
+                        prev.map((h, i) =>
                           i === index
-                            ? { ...r, mitigation: null, mitigated: false }
-                            : r
+                            ? { ...h, mitigation: null, mitigated: false }
+                            : h
                         )
                       )
                     }
@@ -782,40 +782,40 @@ export default function Home() {
                 </h3>
                 <Input
                   placeholder="Use anti-gravity tethers to prevent abduction."
-                  value={risk.mitigation.name}
+                  value={hazard.mitigation.name}
                   className="w-full max-w-md bg-background"
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setRisks((prev) =>
-                      prev.map((r, i) =>
+                    setHazards((prev) =>
+                      prev.map((h, i) =>
                         i === index
                           ? {
-                              ...r,
+                              ...h,
                               mitigation: {
-                                ...r.mitigation!,
+                                ...h.mitigation!,
                                 name: e.target.value,
                               },
                             }
-                          : r
+                          : h
                       )
                     )
                   }
                 />
                 <Textarea
                   placeholder="Equip the robot with anti-gravity tethers that deploy when UFOs are detected nearby, preventing abduction during matches."
-                  value={risk.mitigation.description}
+                  value={hazard.mitigation.description}
                   className="w-full max-w-md bg-background"
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                    setRisks((prev) =>
-                      prev.map((r, i) =>
+                    setHazards((prev) =>
+                      prev.map((h, i) =>
                         i === index
                           ? {
-                              ...r,
+                              ...h,
                               mitigation: {
-                                ...r.mitigation!,
+                                ...h.mitigation!,
                                 description: e.target.value,
                               },
                             }
-                          : r
+                          : h
                       )
                     )
                   }
@@ -827,30 +827,30 @@ export default function Home() {
                       Likelihood:
                     </Label>
                     <Select
-                      defaultValue={risk.mitigation.likelihood.toString()}
+                      defaultValue={hazard.mitigation.likelihood.toString()}
                       onValueChange={(v) =>
-                        setRisks((prev) =>
-                          prev.map((r, i) =>
+                        setHazards((prev) =>
+                          prev.map((h, i) =>
                             i === index
                               ? {
-                                  ...r,
+                                  ...h,
                                   mitigation: {
-                                    ...r.mitigation!,
+                                    ...h.mitigation!,
                                     likelihood: Number(v) as 1 | 2 | 3 | 4 | 5,
-                                    score: calculateRiskScore(
+                                    score: calculateHazardScore(
                                       Number(v) as 1 | 2 | 3 | 4 | 5,
-                                      r.mitigation!.impact,
-                                      r.mitigation!.detectability
+                                      h.mitigation!.impact,
+                                      h.mitigation!.detectability
                                     ),
                                   },
                                 }
-                              : r
+                              : h
                           )
                         )
                       }
                     >
                       <SelectTrigger className="w-full bg-background">
-                        <SelectValue placeholder="Select Risk Level" />
+                        <SelectValue placeholder="Select Hazard Level" />
                       </SelectTrigger>
                       <SelectContent>
                         {[1, 2, 3, 4, 5].map((level) => (
@@ -867,30 +867,30 @@ export default function Home() {
                       Impact:
                     </Label>
                     <Select
-                      defaultValue={risk.mitigation.impact.toString()}
+                      defaultValue={hazard.mitigation.impact.toString()}
                       onValueChange={(v) =>
-                        setRisks((prev) =>
-                          prev.map((r, i) =>
+                        setHazards((prev) =>
+                          prev.map((h, i) =>
                             i === index
                               ? {
-                                  ...r,
+                                  ...h,
                                   mitigation: {
-                                    ...r.mitigation!,
+                                    ...h.mitigation!,
                                     impact: Number(v) as 1 | 2 | 3 | 4 | 5,
-                                    score: calculateRiskScore(
-                                      r.mitigation!.likelihood,
+                                    score: calculateHazardScore(
+                                      h.mitigation!.likelihood,
                                       Number(v) as 1 | 2 | 3 | 4 | 5,
-                                      r.mitigation!.detectability
+                                      h.mitigation!.detectability
                                     ),
                                   },
                                 }
-                              : r
+                              : h
                           )
                         )
                       }
                     >
                       <SelectTrigger className="w-full bg-background">
-                        <SelectValue placeholder="Select Risk Level" />
+                        <SelectValue placeholder="Select Hazard Level" />
                       </SelectTrigger>
                       <SelectContent>
                         {[1, 2, 3, 4, 5].map((level) => (
@@ -906,35 +906,35 @@ export default function Home() {
                       Detectability:
                     </Label>
                     <Select
-                      defaultValue={risk.mitigation.detectability.toString()}
+                      defaultValue={hazard.mitigation.detectability.toString()}
                       onValueChange={(v) =>
-                        setRisks((prev) =>
-                          prev.map((r, i) =>
+                        setHazards((prev) =>
+                          prev.map((h, i) =>
                             i === index
                               ? {
-                                  ...r,
+                                  ...h,
                                   mitigation: {
-                                    ...r.mitigation!,
+                                    ...h.mitigation!,
                                     detectability: Number(v) as
                                       | 1
                                       | 2
                                       | 3
                                       | 4
                                       | 5,
-                                    score: calculateRiskScore(
-                                      r.mitigation!.likelihood,
-                                      r.mitigation!.impact,
+                                    score: calculateHazardScore(
+                                      h.mitigation!.likelihood,
+                                      h.mitigation!.impact,
                                       Number(v) as 1 | 2 | 3 | 4 | 5
                                     ),
                                   },
                                 }
-                              : r
+                              : h
                           )
                         )
                       }
                     >
                       <SelectTrigger className="w-full bg-background">
-                        <SelectValue placeholder="Select Risk Level" />
+                        <SelectValue placeholder="Select Hazard Level" />
                       </SelectTrigger>
                       <SelectContent>
                         {[1, 2, 3, 4, 5].map((level) => (
