@@ -209,25 +209,33 @@ export default function Home() {
             <div className="border-2 h-9 flex items-center px-2 justify-center">
               <p>
                 <span className="text-muted-foreground">Low:</span>{" "}
-                {getHazardBucketCounts().low}
+                <span className="font-mono font-bold">
+                  {getHazardBucketCounts().low}
+                </span>
               </p>
             </div>
             <div className="border-2 border-yellow-500 bg-yellow-950 h-9 flex items-center px-2 justify-center">
               <p>
                 <span className="text-muted-foreground">Medium:</span>{" "}
-                {getHazardBucketCounts().medium}
+                <span className="font-mono font-bold">
+                  {getHazardBucketCounts().medium}
+                </span>
               </p>
             </div>
             <div className="border-2 border-orange-500 bg-orange-950 h-9 flex items-center px-2 justify-center">
               <p>
                 <span className="text-muted-foreground">High:</span>{" "}
-                {getHazardBucketCounts().high}
+                <span className="font-mono font-bold">
+                  {getHazardBucketCounts().high}
+                </span>
               </p>
             </div>
             <div className="border-2 border-red-500 bg-red-950 h-9 flex items-center px-2 justify-center">
               <p>
                 <span className="text-muted-foreground">Critical:</span>{" "}
-                {getHazardBucketCounts().critical}
+                <span className="font-mono font-bold">
+                  {getHazardBucketCounts().critical}
+                </span>
               </p>
             </div>
             <Input
