@@ -138,6 +138,22 @@ export default function Home() {
     ] as const;
     return tagList[Math.floor(Math.random() * tagList.length)];
   }
+  function getRiskBucketCounts() {
+    const nonNewRisks = risks.filter((r) => !r.isNew);
+    const low = nonNewRisks.filter((r) => getEffectiveScore(r) <= 10).length;
+    const medium = nonNewRisks.filter(
+      (r) => getEffectiveScore(r) > 10 && getEffectiveScore(r) <= 40
+    ).length;
+    const high = nonNewRisks.filter(
+      (r) => getEffectiveScore(r) > 40 && getEffectiveScore(r) <= 80
+    ).length;
+    const critical = nonNewRisks.filter(
+      (r) => getEffectiveScore(r) > 80
+    ).length;
+
+    return { low, medium, high, critical, total: nonNewRisks.length };
+  }
+
   return (
     <div className="flex flex-col gap-16">
       <div className="flex flex-row gap-2 items-center">
@@ -196,6 +212,30 @@ export default function Home() {
                 <SelectItem value="name-desc">Sort by Name (Z-A)</SelectItem>
               </SelectContent>
             </Select>
+            <div className="border-2 h-9 flex items-center px-2 justify-center">
+              <p>
+                <span className="text-muted-foreground">Low:</span>{" "}
+                {getRiskBucketCounts().low}
+              </p>
+            </div>
+            <div className="border-2 border-yellow-500 bg-yellow-950 h-9 flex items-center px-2 justify-center">
+              <p>
+                <span className="text-muted-foreground">Medium:</span>{" "}
+                {getRiskBucketCounts().medium}
+              </p>
+            </div>
+            <div className="border-2 border-orange-500 bg-orange-950 h-9 flex items-center px-2 justify-center">
+              <p>
+                <span className="text-muted-foreground">High:</span>{" "}
+                {getRiskBucketCounts().high}
+              </p>
+            </div>
+            <div className="border-2 border-red-500 bg-red-950 h-9 flex items-center px-2 justify-center">
+              <p>
+                <span className="text-muted-foreground">Critical:</span>{" "}
+                {getRiskBucketCounts().critical}
+              </p>
+            </div>
             <Input
               placeholder="Search risks..."
               value={searchQuery}
