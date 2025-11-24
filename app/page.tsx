@@ -20,6 +20,7 @@ import {
   X,
   ShieldCheck,
   Check,
+  TextCursorInput,
 } from "lucide-react";
 import React from "react";
 import Image from "next/image";
@@ -69,6 +70,9 @@ export default function Home() {
   >(null);
   const [sort, setSort] = React.useState("score-desc");
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [newTagInput, setNewTagInput] = React.useState<{
+    [key: number]: string;
+  }>({});
 
   React.useEffect(() => {
     const savedHazards = localStorage.getItem("hazards");
@@ -128,16 +132,6 @@ export default function Home() {
     return hazard.score;
   }
 
-  function getRandomTag() {
-    const tagList = [
-      "AUTO",
-      "TELEOP",
-      "BASE",
-      "Mechanical",
-      "Software",
-    ] as const;
-    return tagList[Math.floor(Math.random() * tagList.length)];
-  }
   function getHazardBucketCounts() {
     const nonNewHazards = hazards.filter((h) => !h.isNew);
     const low = nonNewHazards.filter((h) => getEffectiveScore(h) <= 10).length;
@@ -481,119 +475,141 @@ export default function Home() {
               )}
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button variant="default" className="w-fit">
-                    {hazard.tags.length > 0 ? `Edit Tags` : "Add a Tag!"}
+                  <Button variant="default">
+                    {hazard.tags.length > 0 ? (
+                      <>
+                        <p>Edit Tags</p>
+                        <TextCursorInput />
+                      </>
+                    ) : (
+                      <>
+                        <p>Add a Tag!</p>
+                        <Plus />
+                      </>
+                    )}
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogTitle className="font-bold text-lg mb-4">
                     Edit Tags
                   </DialogTitle>
-                  {hazard.tags === null || hazard.tags.length === 0 ? (
-                    <p className="">
-                      No tags added yet, why not{" "}
-                      <button
-                        className="text-blue-500 hover:underline cursor-pointer"
-                        onClick={() => {
-                          setHazards((prev) =>
-                            prev.map((h, i) =>
-                              i === index
-                                ? {
-                                    ...h,
-                                    tags: [getRandomTag()],
-                                  }
-                                : h
-                            )
-                          );
-                        }}
-                      >
-                        add one
-                      </button>
-                      ?
-                    </p>
-                  ) : (
-                    <div className="flex flex-col gap-2">
-                      {hazard.tags.map((tag, tIndex) => (
-                        <div key={tIndex} className="flex items-center gap-2">
-                          <Input
-                            value={tag}
-                            className="w-full max-w-md bg-background"
-                            onChange={(
-                              e: React.ChangeEvent<HTMLInputElement>
-                            ) =>
-                              setHazards((prev) =>
-                                prev.map((h, i) =>
-                                  i === index
-                                    ? {
-                                        ...h,
-                                        tags: h.tags.map((t, j) =>
-                                          j === tIndex ? e.target.value : t
-                                        ),
-                                      }
-                                    : h
-                                )
+                  <div className="flex flex-col gap-2">
+                    {hazard.tags.length === 0 && (
+                      <p>No tags added yet, why not add one?</p>
+                    )}
+                    {hazard.tags.map((tag, tIndex) => (
+                      <div key={tIndex} className="flex items-center gap-2">
+                        <Input
+                          value={tag}
+                          className="w-full max-w-md bg-background"
+                          onChange={(
+                            e: React.ChangeEvent<HTMLInputElement>
+                          ) => {
+                            const newValue = e.target.value;
+                            setHazards((prev) =>
+                              prev.map((h, i) =>
+                                i === index
+                                  ? {
+                                      ...h,
+                                      tags:
+                                        newValue === ""
+                                          ? h.tags.filter(
+                                              (_, j) => j !== tIndex
+                                            )
+                                          : h.tags.map((t, j) =>
+                                              j === tIndex ? newValue : t
+                                            ),
+                                    }
+                                  : h
                               )
-                            }
-                            onBlur={() => {
-                              if (tag === "") {
-                                setHazards((prev) =>
-                                  prev.map((h, i) =>
-                                    i === index
-                                      ? {
-                                          ...h,
-                                          tags: h.tags.filter(
-                                            (_, j) => j !== tIndex
-                                          ),
-                                        }
-                                      : h
-                                  )
-                                );
-                              }
-                            }}
-                          />
-                          <Button
-                            variant="destructive"
-                            onClick={() =>
-                              setHazards((prev) =>
-                                prev.map((h, i) =>
-                                  i === index
-                                    ? {
-                                        ...h,
-                                        tags: h.tags.filter(
-                                          (_, j) => j !== tIndex
-                                        ),
-                                      }
-                                    : h
-                                )
-                              )
-                            }
-                          >
-                            <Trash />
-                          </Button>
-                        </div>
-                      ))}
-
-                      <div className="flex gap-2 mt-3">
+                            );
+                          }}
+                        />
                         <Button
+                          variant="destructive"
                           onClick={() =>
                             setHazards((prev) =>
                               prev.map((h, i) =>
                                 i === index
                                   ? {
                                       ...h,
-                                      tags: [...h.tags, getRandomTag()],
+                                      tags: h.tags.filter(
+                                        (_, j) => j !== tIndex
+                                      ),
                                     }
                                   : h
                               )
                             )
                           }
                         >
-                          Add Tag
-                          <Plus />
+                          <Trash />
                         </Button>
                       </div>
+                    ))}
+
+                    <div className="flex gap-2 mt-3">
+                      <Input
+                        placeholder="Type a new tag..."
+                        value={newTagInput[index] || ""}
+                        className="w-full bg-background"
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setNewTagInput((prev) => ({
+                            ...prev,
+                            [index]: e.target.value,
+                          }))
+                        }
+                        onKeyDown={(
+                          e: React.KeyboardEvent<HTMLInputElement>
+                        ) => {
+                          if (e.key === "Enter" && newTagInput[index]?.trim()) {
+                            setHazards((prev) =>
+                              prev.map((h, i) =>
+                                i === index
+                                  ? {
+                                      ...h,
+                                      tags: [
+                                        ...h.tags,
+                                        newTagInput[index].trim(),
+                                      ],
+                                    }
+                                  : h
+                              )
+                            );
+                            setNewTagInput((prev) => ({
+                              ...prev,
+                              [index]: "",
+                            }));
+                          }
+                        }}
+                      />
+                      <Button
+                        onClick={() => {
+                          if (newTagInput[index]?.trim()) {
+                            setHazards((prev) =>
+                              prev.map((h, i) =>
+                                i === index
+                                  ? {
+                                      ...h,
+                                      tags: [
+                                        ...h.tags,
+                                        newTagInput[index].trim(),
+                                      ],
+                                    }
+                                  : h
+                              )
+                            );
+                            setNewTagInput((prev) => ({
+                              ...prev,
+                              [index]: "",
+                            }));
+                          }
+                        }}
+                      >
+                        Add
+                        <Plus />
+                      </Button>
                     </div>
-                  )}
+                  </div>
                 </DialogContent>
               </Dialog>
             </div>
